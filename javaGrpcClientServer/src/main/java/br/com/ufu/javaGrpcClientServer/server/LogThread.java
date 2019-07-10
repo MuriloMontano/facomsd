@@ -19,7 +19,7 @@ import io.atomix.core.map.DistributedMap;
 
 public class LogThread implements Runnable {
 	private final BlockingQueue<Input> logQueue;	
-	private Map<Long, byte[]> dataBase;
+	private HashMap<Long, byte[]> dataBase;
 	private String logFolder;
 	
 	private FileHandler logHandler = null;
@@ -34,7 +34,7 @@ public class LogThread implements Runnable {
 
     public LogThread(
     		BlockingQueue<Input> _logQueue, 
-    		Map<Long, byte[]> _dataBase, 
+    		HashMap<Long, byte[]> _dataBase, 
     		String _logFolder, 
     		int _logNumber, 
     		int _snapshotNumber) {

@@ -1,21 +1,19 @@
 package br.com.ufu.javaGrpcClientServer.server;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import br.com.ufu.javaGrpcClientServer.resources.Input;
-import io.atomix.core.map.DistributedMap;
 
 public class ExecutionThread implements Runnable {
 	private BlockingQueue<Input> executionQueue;
 	
-	private DistributedMap<Long, byte[]> dataBase;
+	private HashMap<Long, byte[]> dataBase;
 	
 	private long nextKey;
 	private Input input;
 	
-	public ExecutionThread(BlockingQueue<Input> _executionQueue, DistributedMap<Long, byte[]> _dataBase) {
+	public ExecutionThread(BlockingQueue<Input> _executionQueue, HashMap<Long, byte[]> _dataBase) {
 		this.executionQueue = _executionQueue;
 		this.dataBase = _dataBase;
 		nextKey = dataBase.size();

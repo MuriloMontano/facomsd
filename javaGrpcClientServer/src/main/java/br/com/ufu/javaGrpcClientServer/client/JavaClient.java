@@ -1,10 +1,13 @@
 package br.com.ufu.javaGrpcClientServer.client;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import br.com.ufu.javaGrpcClientServer.CrudServiceGrpc;
@@ -20,7 +23,7 @@ import io.grpc.ManagedChannelBuilder;
 public class JavaClient {
 	private static Properties connection;
 	private static String serverAddress;
-	private static int port;
+	private static int port, defaultPort;
 	
 	private static Thread menuThread;
 	private static Thread responseThread;
@@ -70,11 +73,45 @@ public class JavaClient {
         
 		connection = Configuration.getProperties();
 		serverAddress = connection.getProperty("properties.server.host");
-		port = Integer.parseInt(connection.getProperty("properties.server.port"));
+		defaultPort = Integer.parseInt(connection.getProperty("properties.server.port"));
+		
+		if(atomix.getMembershipService().getMembers().iterator().hasNext()) {
+			System.out.println(atomix.getMembershipService().getMembers().iterator().next().id().id());
+			port = defaultPort + Integer.parseInt(atomix.getMembershipService().getMembers().iterator().next().id().id().replace("member-", ""));
+		}
 		
 		channel = ManagedChannelBuilder
 	    		.forAddress(serverAddress, port).usePlaintext().build();
 		stub = CrudServiceGrpc.newBlockingStub(channel);
+		
+		atomix.getEventService().subscribe("shutdown", message -> {
+			System.out.println("Mudando de servidor!");
+			
+				if(atomix.getMembershipService().getMembers().iterator().hasNext()) {
+					port = defaultPort + Integer.parseInt(atomix.getMembershipService().getMembers().iterator().next().id().id().replace("member-", ""));
+					
+					channel = ManagedChannelBuilder
+				    		.forAddress(serverAddress, port).usePlaintext().build();
+					stub = CrudServiceGrpc.newBlockingStub(channel);
+			}
+			return CompletableFuture.completedFuture(message);
+			});
+		
+		/*atomix.getBroadcastService().addListener("teste", message -> {
+			System.out.println("Mudando de servidor!");
+			
+			if(atomix.getMembershipService().getMembers().iterator().hasNext()) {
+				port = defaultPort + Integer.parseInt(atomix.getMembershipService().getMembers().iterator().next().id().id().replace("member-", ""));
+				
+				if(channel != null) {
+					channel.shutdown();
+				}
+				
+				channel = ManagedChannelBuilder
+			    		.forAddress(serverAddress, port).usePlaintext().build();
+				stub = CrudServiceGrpc.newBlockingStub(channel);
+			}
+		});*/
 		
 		menuThread = new Thread(new MenuThread(stub, responseQueue));
 		menuThread.setDaemon(true);

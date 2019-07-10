@@ -17,13 +17,12 @@ import io.atomix.core.Atomix;
 import io.atomix.core.map.DistributedMap;
 
 public class DataBaseRecovery {
-	@SuppressWarnings("unchecked")
-	public static DistributedMap<Long, byte[]> dataBaseRecovery(
+	public static HashMap<Long, byte[]> dataBaseRecovery(
 			Atomix _atomix,
 			BlockingQueue<Input> _executionQueue, String _logFolder, 
 			int _logNumber, int _snapshotNumber) throws IOException {
 		
-		DistributedMap<Long, byte[]> dataBase = _atomix.<Long, byte[]>mapBuilder("database").withCacheEnabled().build();
+		HashMap<Long, byte[]> dataBase =  new HashMap<Long, byte[]>();
 		
 		String logFileName;
 		File logFile, snapshotFile;

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -18,7 +17,6 @@ import io.atomix.cluster.Node;
 import io.atomix.cluster.discovery.BootstrapDiscoveryProvider;
 import io.atomix.core.Atomix;
 import io.atomix.core.AtomixBuilder;
-import io.atomix.core.map.DistributedMap;
 import io.atomix.core.profile.ConsensusProfile;
 import io.atomix.utils.net.Address;
 import io.grpc.Server;
@@ -39,7 +37,7 @@ public class JavaServer {
 	private BlockingQueue<Input> logQueue;
 	private BlockingQueue<Input> repassQueue;
 	
-	private DistributedMap<Long, byte[]> dataBase;
+	private HashMap<Long, byte[]> dataBase;
 	
 	private int logNumber;
 	private int snapshotNumber;
@@ -48,6 +46,7 @@ public class JavaServer {
     private static List<Address> addresses;
     
     private static AtomixBuilder builder;
+    private static Atomix atomix;
 	
 	public JavaServer(String[] args) throws IOException {	
 		id = Integer.parseInt(args[0]);
@@ -60,7 +59,7 @@ public class JavaServer {
 
         builder = Atomix.builder();
         
-        Atomix atomix = builder
+        atomix = builder
         		.withMemberId("member-" + id)
                 .withAddress(addresses.get(id))
                 .withMembershipProvider(
@@ -178,9 +177,7 @@ public class JavaServer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		
-		System.out.println("A base de dados foi encerrada!");
+		}	
 	}
 
 	private void blockUntilShutdown() throws InterruptedException {
@@ -189,13 +186,12 @@ public class JavaServer {
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
-		//final JavaServer server = new JavaServer((args.length == 2)? 
-		//		new Node(args[0], Integer.parseInt(args[1]), Double.valueOf(String.valueOf(args[0]).hashCode() + Integer.valueOf(args[1])).hashCode()) : null);
-		
+	public static void main(String[] args) throws IOException, InterruptedException {	
 		final JavaServer server = new JavaServer(args);
 		server.start();
 		server.blockUntilShutdown();
+		
+		atomix.getEventService().send("shutdown", Integer.toString(port));
 	}
 		
 }
